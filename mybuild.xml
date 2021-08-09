@@ -1,0 +1,116 @@
+<project xmlns:ivy="antlib:org.apache.ivy.ant" name="testivy" default="test-brief">
+    
+    <property name="src.dir" value="src" />
+    <property name="src.test.dir" value="testsrc" />
+    <property name="build.dir" value="build" />
+    <property name="build.classes.dir" value="build/classes" />
+    <property name="build.test.dir" value="build/test" />
+    <property name="test.data.dir" value="build/data" />
+    <property name="test.reports.dir" value="build/reports" />
+    
+	<target name="init">
+		<mkdir dir="${build.classes.dir}"/>
+        <mkdir dir="${build.test.dir}"/> 
+        <mkdir dir="${test.data.dir}"/> 
+        <mkdir dir="${test.reports.dir}"/>         
+        <path id="test.classpath">
+            <fileset dir="lib">
+			<include name="**/*.jar" />
+            </fileset>
+            <pathelement  path="${build.classes.dir}" />
+        </path>
+    </target>
+	
+    <target name="clean" depends="init" description="Deletes build directories." >
+        <delete dir="${build.dir}" />
+    </target>
+    
+	<target name="compile" depends="init"  >		
+		<javac srcdir="src" destdir="build/classes"  includeantruntime="no">
+			<classpath refid="test.classpath"/>
+		</javac>
+	</target>
+	
+	<target name="test-compile" depends="compile">		
+		<javac includeantruntime="no" srcdir="testsrc" destdir="${build.classes.dir}" >
+			<classpath refid="test.classpath"/>
+		</javac>
+	</target>
+	
+	<target name="test-brief" depends="test-compile">
+        <junit haltonfailure="true"
+                printsummary="false"> 
+            <formatter type="brief" usefile="false" />
+            <classpath refid="test.classpath"/>
+
+            <test name="org.eclipseguide.persistence.FilePersistenceServicesTest"/>
+            <test name="org.example.antbook.junit.SimpleTest"/>
+        </junit>
+    </target>
+    
+    <target name="test-xml" depends="test-compile">
+        <junit haltonfailure="true"
+                printsummary="false"> 
+            <classpath refid="test.classpath"/>
+            <formatter type="brief" usefile="false" />
+            <formatter type="xml"/>
+
+            <test todir="${test.data.dir}"
+                  name="org.eclipseguide.persistence.FilePersistenceServicesTest"/>
+        </junit>
+    </target>
+    
+    <target name="test-batch" depends="test-compile">
+        <junit haltonfailure="false"
+                printsummary="false"> 
+            <classpath refid="test.classpath"/>
+            <formatter type="brief" usefile="false" />
+            <formatter type="xml"/>
+
+            <batchtest todir="${test.data.dir}">
+                  <fileset dir="${build.classes.dir}"
+                           includes="**/*Test.class" />
+            </batchtest>
+        </junit>
+        
+        <junitreport todir="${test.data.dir}">
+            <fileset dir="${test.data.dir}">
+                <include name="TEST-*.xml"/>
+            </fileset>
+            
+            <!-- make sure [haltonfailure = false] for report to work-->
+            <report format="frames" todir="${test.reports.dir}"/>
+        </junitreport>
+        
+    </target>
+
+    <target name="test" depends="test-compile">
+        <junit haltonfailure="false"
+                printsummary="false"
+                errorProperty="test.failed"
+                failureProperty="test.failed">
+                
+            <classpath refid="test.classpath"/>
+            <formatter type="brief" usefile="false" />
+            <formatter type="xml"/>
+
+            <batchtest todir="${test.data.dir}">
+                  <fileset dir="${build.classes.dir}"
+                           includes="**/*Test.class" />
+            </batchtest>
+        </junit>
+        
+        <junitreport todir="${test.data.dir}">
+            <fileset dir="${test.data.dir}">
+                <include name="TEST-*.xml"/>
+            </fileset>
+            
+            <!-- make sure [haltonfailure = false] for report to work-->
+            <report format="frames" todir="${test.reports.dir}"/>
+        </junitreport>
+        
+        <fail message="Tests failed. Check log and/or reports."
+              if="test.failed"/>        
+    </target>
+    
+</project>
